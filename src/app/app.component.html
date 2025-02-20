@@ -1,28 +1,39 @@
 <div class="h-screen flex flex-col">
+  <!-- 搜尋表單 -->
   <form (ngSubmit)="onSubmit($event)">
     <mat-form-field class="w-full">
+      <!-- 搜尋輸入框：雙向綁定 searchText -->
       <input
         matInput
         placeholder="Enter a book title"
         [value]="search.searchText"
         (input)="onSearchInputChange($event)"
       />
-      <button mat-icon-button matSuffix type="submit">
+      <!-- 搜尋按鈕：載入時禁用 -->
+      <button
+        mat-icon-button
+        matSuffix
+        type="submit"
+        [disabled]="loading$ | async"
+      >
         <mat-icon>search</mat-icon>
       </button>
     </mat-form-field>
   </form>
 
-  <!-- 載入中狀態 -->
+  <!-- 載入中狀態：顯示進度條 -->
   @if (loading$ | async) {
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
   }
 
-  <!-- 搜尋結果 -->
+  <!-- 搜尋結果區域：只在有結果時顯示 -->
   @if ((searchResults | async)?.docs?.length) {
+  <!-- 結果列表 -->
   <mat-list role="list" class="flex-grow min-h-0 overflow-y-auto">
+    <!-- 遍歷每個搜尋結果 -->
     @for (result of (searchResults | async)?.docs; track result.title) {
     <mat-list-item role="listitem">
+      <!-- 書籍封面圖片 -->
       <img
         matListItemAvatar
         [src]="
@@ -31,7 +42,9 @@
           '-M.jpg'
         "
       />
+      <!-- 書名 -->
       <div matListItemTitle>{{ result.title }}</div>
+      <!-- 作者名稱：如果沒有作者則顯示 Unknown Author -->
       <div matListItemLine>
         {{ result.author_name?.join(", ") || "Unknown Author" }}
       </div>
@@ -39,6 +52,7 @@
     }
   </mat-list>
 
+  <!-- 分頁控制器 -->
   <mat-paginator
     class="border-0 border-t border-black border-solid"
     [length]="(searchResults | async)?.num_found ?? 0"
@@ -50,7 +64,7 @@
   />
   }
 
-  <!-- 無結果狀態 -->
+  <!-- 無結果狀態：顯示提示訊息 -->
   @if ((searchResults | async)?.docs?.length === 0) {
   <div class="text-center p-4">No results found</div>
   }

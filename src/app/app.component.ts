@@ -51,51 +51,68 @@ interface SearchResult {
   standalone: true,
 })
 export class AppComponent {
+  // 注入所需服務
   private http = inject(HttpClient);
   search = inject(SearchService);
+
+  // 載入狀態管理
   private loadingSubject = new BehaviorSubject<boolean>(false);
   loading$ = this.loadingSubject.asObservable();
 
+  // 搜尋結果處理
   searchResults = this.search.currentSearch.pipe(
     filter((search) => !!search?.searchText),
+    // 開始載入：顯示進度條
     tap(() => this.loadingSubject.next(true)),
+    // 切換到新的搜尋：取消舊的請求
     switchMap((search) =>
       this.searchBooks(search!).pipe(
+        // 取消機制，避免舊的請求蓋到新的請求
         takeUntil(this.search.cancelSearch$),
+        // 錯誤處理：返回空結果
         catchError(() =>
           of({
             num_found: 0,
             docs: [],
           })
         ),
+        // 結束載入：隱藏進度條
         finalize(() => this.loadingSubject.next(false))
       )
     )
   );
 
+  // 處理搜尋輸入
   onSearchInputChange(event: Event) {
     this.search.searchText = (event.target as HTMLInputElement).value;
   }
 
+  // 處理表單提交
   onSubmit(event: Event) {
     event.preventDefault();
     this.search.submit();
   }
 
+  // 處理分頁變更
   onPageChange(event: PageEvent) {
     if (event.pageSize !== this.search.pageSize) {
+      // 如果改變每頁筆數，重置到第一頁
       this.search.setPageSize(event.pageSize);
     } else {
+      // 只改變頁碼
       this.search.page = event.pageIndex + 1;
       this.search.submit();
     }
   }
 
+  // Call API
   searchBooks(currentSearch: CurrentSearch): Observable<SearchResult> {
     const { searchText, pageSize, page } = currentSearch;
 
+    // 處理搜尋文字格式
     const searchQuery = searchText.split(' ').join('+').toLowerCase();
 
+    // 發送 API 請求
     const response = this.http.get<SearchResult>(
       `https://openlibrary.org/search.json?title=${searchQuery}&page=${page}&limit=${pageSize}`
     );

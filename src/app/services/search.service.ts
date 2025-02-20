@@ -57,8 +57,7 @@ export class SearchService implements ISearchService {
 
   submit() {
     if (!this.searchText.trim()) return;
-
-    // 取消之前的搜尋
+    //取消舊的搜尋請求
     this.searchCancel$.next();
 
     const search: CurrentSearch = {
