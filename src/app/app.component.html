@@ -1,0 +1,57 @@
+<div class="h-screen flex flex-col">
+  <form (ngSubmit)="onSubmit($event)">
+    <mat-form-field class="w-full">
+      <input
+        matInput
+        placeholder="Enter a book title"
+        [value]="search.searchText"
+        (input)="onSearchInputChange($event)"
+      />
+      <button mat-icon-button matSuffix type="submit">
+        <mat-icon>search</mat-icon>
+      </button>
+    </mat-form-field>
+  </form>
+
+  <!-- 載入中狀態 -->
+  @if (loading$ | async) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+
+  <!-- 搜尋結果 -->
+  @if ((searchResults | async)?.docs?.length) {
+  <mat-list role="list" class="flex-grow min-h-0 overflow-y-auto">
+    @for (result of (searchResults | async)?.docs; track result.title) {
+    <mat-list-item role="listitem">
+      <img
+        matListItemAvatar
+        [src]="
+          'https://covers.openlibrary.org/b/olid/' +
+          result.cover_edition_key +
+          '-M.jpg'
+        "
+      />
+      <div matListItemTitle>{{ result.title }}</div>
+      <div matListItemLine>
+        {{ result.author_name?.join(", ") || "Unknown Author" }}
+      </div>
+    </mat-list-item>
+    }
+  </mat-list>
+
+  <mat-paginator
+    class="border-0 border-t border-black border-solid"
+    [length]="(searchResults | async)?.num_found ?? 0"
+    [pageIndex]="search.page - 1"
+    [pageSize]="search.pageSize"
+    [pageSizeOptions]="[5, 10, 25, 50]"
+    (page)="onPageChange($event)"
+    aria-label="Select page"
+  />
+  }
+
+  <!-- 無結果狀態 -->
+  @if ((searchResults | async)?.docs?.length === 0) {
+  <div class="text-center p-4">No results found</div>
+  }
+</div>
